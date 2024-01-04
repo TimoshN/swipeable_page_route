@@ -157,6 +157,7 @@ class EndState {
       case TargetPlatform.fuchsia:
       case TargetPlatform.linux:
       case TargetPlatform.windows:
+      case TargetPlatform.aurora:
         return false;
       case TargetPlatform.iOS:
       case TargetPlatform.macOS:
