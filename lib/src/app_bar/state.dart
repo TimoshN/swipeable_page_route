@@ -153,15 +153,17 @@ class EndState {
     if (appBar.centerTitle != null) return appBar.centerTitle!;
     if (appBarTheme.centerTitle != null) return appBarTheme.centerTitle!;
     switch (theme.platform) {
-      case TargetPlatform.android:
-      case TargetPlatform.fuchsia:
-      case TargetPlatform.linux:
-      case TargetPlatform.windows:
-      case TargetPlatform.aurora:
-        return false;
+    //   case TargetPlatform.android:
+    //   case TargetPlatform.fuchsia:
+    //   case TargetPlatform.linux:
+    //   case TargetPlatform.windows:
+    //   case TargetPlatform.aurora:
+    //     return false;
       case TargetPlatform.iOS:
       case TargetPlatform.macOS:
         return appBar.actions == null || appBar.actions!.length < 2;
+      default:
+        return false;
     }
   }
 
