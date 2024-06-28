@@ -16,17 +16,18 @@ import 'package:flutter/material.dart';
 /// because [PageTransitionsTheme] uses the builder for iOS whenever a pop
 /// gesture is in progress.
 class SwipeablePageTransitionsBuilder extends PageTransitionsBuilder {
-  const SwipeablePageTransitionsBuilder({
-    this.canOnlySwipeFromEdge = false,
-    this.backGestureDetectionWidth = kMinInteractiveDimension,
-    this.backGestureDetectionStartOffset = 0,
-    this.transitionBuilder,
-  });
+  const SwipeablePageTransitionsBuilder(
+      {this.canOnlySwipeFromEdge = false,
+      this.backGestureDetectionWidth = kMinInteractiveDimension,
+      this.backGestureDetectionStartOffset = 0,
+      this.transitionBuilder,
+      required this.disableCheck});
 
   final bool canOnlySwipeFromEdge;
   final double backGestureDetectionWidth;
   final double backGestureDetectionStartOffset;
   final SwipeableTransitionBuilder? transitionBuilder;
+  final bool Function() disableCheck;
 
   @override
   Widget buildTransitions<T>(
@@ -41,6 +42,7 @@ class SwipeablePageTransitionsBuilder extends PageTransitionsBuilder {
       context,
       animation,
       secondaryAnimation,
+      disableCheck,
       child,
       canOnlySwipeFromEdge: () => canOnlySwipeFromEdge,
       backGestureDetectionWidth: () => backGestureDetectionWidth,
@@ -65,6 +67,7 @@ class SwipeablePageRoute<T> extends CupertinoPageRoute<T> {
     Duration? transitionDuration,
     SwipeableTransitionBuilder? transitionBuilder,
     required super.builder,
+    required this.disableCheck,
     super.title,
     super.settings,
     super.maintainState,
@@ -81,6 +84,8 @@ class SwipeablePageRoute<T> extends CupertinoPageRoute<T> {
   /// Set this to `false` to disable swiping completely.
   /// {@endtemplate}
   bool canSwipe;
+
+  final bool Function() disableCheck;
 
   /// {@template swipeable_page_route.SwipeablePageRoute.canOnlySwipeFromEdge}
   /// Whether only back gestures close to the left (LTR) or right (RTL) screen
@@ -215,6 +220,7 @@ class SwipeablePageRoute<T> extends CupertinoPageRoute<T> {
       context,
       animation,
       secondaryAnimation,
+      disableCheck,
       child,
       canSwipe: () => canSwipe,
       canOnlySwipeFromEdge: () => canOnlySwipeFromEdge,
@@ -225,19 +231,19 @@ class SwipeablePageRoute<T> extends CupertinoPageRoute<T> {
   }
 
   static Widget buildPageTransitions<T>(
-    PageRoute<T> route,
-    BuildContext context,
-    Animation<double> animation,
-    Animation<double> secondaryAnimation,
-    Widget child, {
-    ValueGetter<bool> canSwipe = _defaultCanSwipe,
-    ValueGetter<bool> canOnlySwipeFromEdge = _defaultCanOnlySwipeFromEdge,
-    ValueGetter<double> backGestureDetectionWidth =
-        _defaultBackGestureDetectionWidth,
-    ValueGetter<double> backGestureDetectionStartOffset =
-        _defaultBackGestureDetectionStartOffset,
-    SwipeableTransitionBuilder? transitionBuilder,
-  }) {
+      PageRoute<T> route,
+      BuildContext context,
+      Animation<double> animation,
+      Animation<double> secondaryAnimation,
+      bool Function() disableCheck,
+      Widget child,
+      {ValueGetter<bool> canSwipe = _defaultCanSwipe,
+      ValueGetter<bool> canOnlySwipeFromEdge = _defaultCanOnlySwipeFromEdge,
+      ValueGetter<double> backGestureDetectionWidth =
+          _defaultBackGestureDetectionWidth,
+      ValueGetter<double> backGestureDetectionStartOffset =
+          _defaultBackGestureDetectionStartOffset,
+      SwipeableTransitionBuilder? transitionBuilder}) {
     final Widget wrappedChild;
     if (route.fullscreenDialog) {
       wrappedChild = child;
@@ -248,6 +254,7 @@ class SwipeablePageRoute<T> extends CupertinoPageRoute<T> {
           assert(_isPopGestureEnabled(route, canSwipe()));
           return _startPopGesture(route);
         },
+        disableCheck: disableCheck,
         canOnlySwipeFromEdge: canOnlySwipeFromEdge,
         backGestureDetectionWidth: backGestureDetectionWidth,
         backGestureDetectionStartOffset: backGestureDetectionStartOffset,
@@ -296,6 +303,7 @@ class SwipeablePage<T> extends Page<T> {
     this.transitionDuration,
     SwipeableTransitionBuilder? transitionBuilder,
     this.title,
+    required this.disableCheck,
     super.key,
     super.name,
     super.arguments,
@@ -309,6 +317,8 @@ class SwipeablePage<T> extends Page<T> {
 
   /// {@macro swipeable_page_route.SwipeablePageRoute.canSwipe}
   final bool canSwipe;
+
+  final bool Function() disableCheck;
 
   /// {@macro swipeable_page_route.SwipeablePageRoute.canOnlySwipeFromEdge}
   final bool canOnlySwipeFromEdge;
@@ -349,6 +359,7 @@ class SwipeablePage<T> extends Page<T> {
       transitionDuration: transitionDuration,
       transitionBuilder: transitionBuilder,
       builder: builder,
+      disableCheck: disableCheck,
       title: title,
       settings: this,
       maintainState: maintainState,
@@ -386,6 +397,7 @@ class _FancyBackGestureDetector<T> extends StatefulWidget {
     required this.backGestureDetectionWidth,
     required this.backGestureDetectionStartOffset,
     required this.enabledCallback,
+    required this.disableCheck,
     required this.onStartPopGesture,
     required this.child,
   });
@@ -393,7 +405,7 @@ class _FancyBackGestureDetector<T> extends StatefulWidget {
   final ValueGetter<bool> canOnlySwipeFromEdge;
   final ValueGetter<double> backGestureDetectionWidth;
   final ValueGetter<double> backGestureDetectionStartOffset;
-
+  final bool Function() disableCheck;
   final Widget child;
   final ValueGetter<bool> enabledCallback;
   final ValueGetter<_CupertinoBackGestureController<T>> onStartPopGesture;
@@ -437,6 +449,7 @@ class _FancyBackGestureDetectorState<T>
     return _DirectionDependentDragGestureRecognizer(
       debugOwner: this,
       directionality: directionality,
+      disableCheck: widget.disableCheck,
       checkStartedCallback: () => _backGestureController != null,
       enabledCallback: widget.enabledCallback,
       detectionArea: () => widget.canOnlySwipeFromEdge()
@@ -599,6 +612,7 @@ class _DirectionDependentDragGestureRecognizer
     required this.enabledCallback,
     required this.detectionArea,
     required this.checkStartedCallback,
+    required this.disableCheck,
     super.debugOwner,
   });
 
@@ -606,9 +620,11 @@ class _DirectionDependentDragGestureRecognizer
   final ValueGetter<bool> enabledCallback;
   final ValueGetter<_DetectionArea?> detectionArea;
   final ValueGetter<bool> checkStartedCallback;
+  final bool Function() disableCheck;
 
   @override
   void handleEvent(PointerEvent event) {
+    // debugPrint("SwipeablePageRoute.handleEvent=${event}");
     if (_shouldHandle(event)) {
       super.handleEvent(event);
     } else {
@@ -617,6 +633,8 @@ class _DirectionDependentDragGestureRecognizer
   }
 
   bool _shouldHandle(PointerEvent event) {
+    bool disable = disableCheck();
+    if (disable) return false;
     if (checkStartedCallback()) return true;
     if (!enabledCallback()) return false;
 
