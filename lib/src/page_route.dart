@@ -185,7 +185,8 @@ class SwipeablePageRoute<T> extends CupertinoPageRoute<T> {
       return false;
     }
     // If we're in a gesture already, we cannot start another.
-    if (CupertinoRouteTransitionMixin.isPopGestureInProgress(route)) {
+    // if (CupertinoRouteTransitionMixin.isPopGestureInProgress(route)) {
+    if (route.popGestureInProgress) {
       return false;
     }
 
@@ -267,8 +268,9 @@ class SwipeablePageRoute<T> extends CupertinoPageRoute<T> {
       context,
       animation,
       secondaryAnimation,
-      /* isSwipeGesture: */ CupertinoRouteTransitionMixin
-          .isPopGestureInProgress(route),
+      // /* isSwipeGesture: */ CupertinoRouteTransitionMixin
+      //     .isPopGestureInProgress(route),
+      route.popGestureInProgress,
       wrappedChild,
     );
   }
